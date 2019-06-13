@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2015-2019 Connor Van Elswyk
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/data/jpa
+                           http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <context:property-placeholder location="classpath*:application.properties"/>
+    <context:component-scan base-package="com.plainviewrd">
+        <context:exclude-filter type="regex" expression="com\.plainviewrd\.frontier\..*"/>
+        <context:exclude-filter type="regex" expression="com\.plainviewrd\.commons\.learning\..*"/>
+    </context:component-scan>
+    <jpa:repositories base-package="com.plainviewrd.commons.repository, com.plainviewrd.repository"
+                      entity-manager-factory-ref="entityManagerFactory"
+                      transaction-manager-ref="transactionManager"/>
+    <tx:annotation-driven/>
+
+
+    <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close" primary="true">
+        <constructor-arg ref="hikariConfig"/>
+    </bean>
+
+    <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+        <property name="dataSourceClassName" value="${jdbc.classname}"/>
+        <property name="poolName" value="${hikari.poolName}"/>
+        <property name="maximumPoolSize" value="${hikari.workerMaxPoolSize}"/>
+        <property name="minimumIdle" value="${hikari.workerMinimumIdle}"/>
+        <property name="connectionTimeout" value="${hikari.connectionTimeout}"/>
+        <property name="validationTimeout" value="${hikari.validationTimeout}"/>
+        <property name="maxLifetime" value="${hikari.maxLifetime}"/>
+        <property name="leakDetectionThreshold" value="${hikari.leakDetectionThreshold}"/>
+        <property name="idleTimeout" value="${hikari.idleTimeout}"/>
+
+        <property name="dataSourceProperties">
+            <props>
+                <prop key="url">${jdbc.url}</prop>
+                <prop key="user">${jdbc.username}</prop>
+                <prop key="password">${jdbc.password}</prop>
+                <prop key="cachePrepStmts">true</prop>
+                <prop key="prepStmtCacheSize">256</prop>
+                <prop key="prepStmtCacheSqlLimit">4096</prop>
+                <prop key="useServerPrepStmts">false</prop>
+                <prop key="useLocalSessionState">true</prop>
+                <prop key="rewriteBatchedStatements">true</prop>
+                <prop key="cacheResultSetMetadata">true</prop>
+                <prop key="cacheServerConfiguration">true</prop>
+                <prop key="elideSetAutoCommits">true</prop>
+                <prop key="maintainTimeStats">false</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="databasePlatform" value="${hibernate.dialect}"/>
+            </bean>
+        </property>
+        <property name="packagesToScan">
+            <list>
+                <value>com.plainviewrd</value>
+            </list>
+        </property>
+        <property name="jpaProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+                <prop key="hibernate.jdbc.batch_size">${hibernate.jdbc.batch_size}</prop>
+                <prop key="hibernate.order_inserts">${hibernate.order_inserts}</prop>
+                <prop key="hibernate.order_updates">${hibernate.order_updates}</prop>
+                <prop key="hibernate.jdbc.batch_versioned_data">${hibernate.jdbc.batch_versioned_data}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+</beans>
